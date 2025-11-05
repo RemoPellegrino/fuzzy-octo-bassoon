@@ -1,16 +1,16 @@
-name: Cypress Tests with Allure 3 Report
+name: Cypress Tests with Allure 3 (Frank Escobar)
 
 on:
   push:
     branches: [ main ]
   pull_request:
 
-permissions:
-  packages: read
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Checkout repo
@@ -24,19 +24,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Cypress tests with Allure enabled
-        run: npx cypress run --env allure=true
+      - name: Run Cypress with Allure plugin
+        run: npm run test:allure
 
+      # ✅ Start Allure Docker service to generate report
       - name: Generate Allure 3 Report
         run: |
           mkdir -p allure-report
-          docker run --rm \
-            -v ${{ github.workspace }}/allure-results:/app/allure-results \
-            -v ${{ github.workspace }}/allure-report:/app/allure-report \
-            ghcr.io/allure-framework/allure3:latest \
-            generate /app/allure-results --output /app/allure-report --clean
+          docker run --rm -v ${{ github.workspace }}/allure-results:/app/allure-results -v ${{ github.workspace }}/allure-report:/app/allure-report frankescobar/allure-docker-service:latest generate /app/allure-results /app/allure-report
 
-      - name: Upload Allure 3 report as artifact
+      - name: Upload Allure 3 Report Artifact
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
