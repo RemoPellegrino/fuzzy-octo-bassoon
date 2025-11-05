@@ -27,11 +27,21 @@ jobs:
       - name: Run Cypress tests with Allure enabled
         run: npx cypress run --env allure=true
 
-      # ✅ Start Allure Docker service to generate report
       - name: Generate Allure 3 Report
         run: |
           mkdir -p allure-report
-          docker run --rm -v ${{ github.workspace }}/allure-results:/app/allure-results -v ${{ github.workspace }}/allure-report:/app/allure-report frankescobar/allure-docker-service:latest generate /app/allure-results /app/allure-report
+
+          # Start Allure Docker container in background
+          CONTAINER_ID=$(docker run -d \
+            -v ${{ github.workspace }}/allure-results:/app/allure-results \
+            -v ${{ github.workspace }}/allure-report:/app/allure-report \
+            frankescobar/allure-docker-service:latest sleep infinity)
+
+          # Execute the CLI inside the container
+          docker exec $CONTAINER_ID allure generate /app/allure-results --clean -o /app/allure-report
+
+          # Stop and remove the container
+          docker stop $CONTAINER_ID
 
       - name: Upload Allure 3 Report Artifact
         uses: actions/upload-artifact@v4
