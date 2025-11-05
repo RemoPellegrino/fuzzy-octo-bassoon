@@ -31,17 +31,32 @@ jobs:
         run: |
           mkdir -p allure-report
 
-          # Start Allure Docker container in background
+          echo "Starting Allure Docker container..."
           CONTAINER_ID=$(docker run -d \
             -v ${{ github.workspace }}/allure-results:/app/allure-results \
             -v ${{ github.workspace }}/allure-report:/app/allure-report \
             frankescobar/allure-docker-service:latest sleep infinity)
 
-          # Execute the CLI inside the container
-          docker exec $CONTAINER_ID allure generate /app/allure-results --clean -o /app/allure-report
+          echo "Container started: $CONTAINER_ID"
 
-          # Stop and remove the container
+          echo "Listing /app inside container before generation:"
+          docker exec $CONTAINER_ID ls -R /app
+
+          echo "Attempting to generate report..."
+          docker exec $CONTAINER_ID sh -c "ls /usr/bin /usr/local/bin; which allure"
+          docker exec $CONTAINER_ID sh -c "allure generate /app/allure-results --clean -o /app/allure-report"
+
+          echo "Listing /app/allure-report inside container after generation:"
+          docker exec $CONTAINER_ID ls -R /app/allure-report
+
+          echo "Listing host folder:"
+          ls -R allure-report
+
+          echo "Stopping container..."
           docker stop $CONTAINER_ID
+
+      - name: List all files in Root directory
+        run: ls -R
 
       - name: Upload Allure 3 Report Artifact
         uses: actions/upload-artifact@v4
