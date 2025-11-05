@@ -34,20 +34,15 @@ jobs:
           echo "Starting Allure Docker container..."
           CONTAINER_ID=$(docker run -d \
             -v ${{ github.workspace }}/allure-results:/app/allure-results \
-            -v ${{ github.workspace }}/allure-report:/app/allure-report \
             frankescobar/allure-docker-service:latest sleep infinity)
 
           echo "Container started: $CONTAINER_ID"
 
-          echo "Listing /app inside container before generation:"
-          docker exec $CONTAINER_ID ls -R /app
-
-          echo "Attempting to generate report..."
-          docker exec $CONTAINER_ID sh -c "ls /usr/bin /usr/local/bin; which allure"
+          echo "Generating report inside container..."
           docker exec $CONTAINER_ID sh -c "allure generate /app/allure-results --clean -o /app/allure-report"
 
-          echo "Listing /app/allure-report inside container after generation:"
-          docker exec $CONTAINER_ID ls -R /app/allure-report
+          echo "Copying report from container to host folder..."
+          docker cp $CONTAINER_ID:/app/allure-report ./allure-report
 
           echo "Listing host folder:"
           ls -R allure-report
